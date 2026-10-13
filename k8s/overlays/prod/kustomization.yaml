@@ -1,0 +1,24 @@
+# Real cluster: images come from a registry. Edit REGISTRY/TAG (or use `kustomize edit set image`).
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../base
+  - hpa.yaml
+images:
+  - {name: mediassist-gateway,   newName: ghcr.io/REPLACE_ME/mediassist-gateway,   newTag: "1.0.0"}
+  - {name: mediassist-frontend,  newName: ghcr.io/REPLACE_ME/mediassist-frontend,  newTag: "1.0.0"}
+  - {name: mediassist-diagnosis, newName: ghcr.io/REPLACE_ME/mediassist-diagnosis, newTag: "1.0.0"}
+  - {name: mediassist-imaging,   newName: ghcr.io/REPLACE_ME/mediassist-imaging,   newTag: "1.0.0"}
+  - {name: mediassist-drug,      newName: ghcr.io/REPLACE_ME/mediassist-drug,      newTag: "1.0.0"}
+  - {name: mediassist-chatbot,   newName: ghcr.io/REPLACE_ME/mediassist-chatbot,   newTag: "1.0.0"}
+patches:
+  - target: {kind: Deployment, name: gateway}
+    patch: |-
+      - {op: replace, path: /spec/replicas, value: 2}
+      - {op: replace, path: /spec/template/spec/containers/0/imagePullPolicy, value: IfNotPresent}
+  - target: {kind: Deployment, name: frontend}
+    patch: |-
+      - {op: replace, path: /spec/replicas, value: 2}
+  - target: {kind: Ingress, name: mediassist}
+    patch: |-
+      - {op: replace, path: /spec/rules/0/host, value: mediassist.example.com}

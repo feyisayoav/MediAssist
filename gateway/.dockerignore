@@ -1,0 +1,4 @@
+gateway_bin
+gateway
+*.log
+.git

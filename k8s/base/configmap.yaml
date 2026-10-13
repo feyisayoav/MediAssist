@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mediassist-config
+  namespace: mediassist
+data:
+  # Gateway -> backend services (cluster DNS = Service names)
+  DIAGNOSIS_SERVICE_URL: "http://diagnosis:8000"
+  IMAGING_SERVICE_URL: "http://imaging:8001"
+  DRUG_SERVICE_URL: "http://drug:8002"
+  CHATBOT_SERVICE_URL: "http://chatbot:8003"
+  ALLOWED_ORIGINS: "*"
+  # Chatbot behaviour
+  CHATBOT_ENABLE_RERANKING: "false"
+  CHATBOT_ENABLE_GENERATION: "true"

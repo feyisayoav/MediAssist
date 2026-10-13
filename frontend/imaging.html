@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Image Analysis — MediAssist</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23194391'/%3E%3Cpath d='M16 24s-7-4.4-7-9.6A4 4 0 0 1 16 12a4 4 0 0 1 7 2.4C23 19.6 16 24 16 24z' fill='none' stroke='white' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+  <script>try{var t=localStorage.getItem("theme")||(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");document.documentElement.dataset.theme=t}catch(e){}</script>
+</head>
+<body data-page="imaging" data-title="Image Analysis" data-subtitle="Upload a scan for per-condition findings and a Grad-CAM heatmap">
+  <div class="app">
+    <aside class="sidebar" id="sidebar"></aside>
+    <div class="inset">
+      <header class="topbar" id="topbar"></header>
+      <main class="page">
+        <div class="page-intro">
+          <h2>Analyze a medical image</h2>
+          <p>Upload a chest X-ray or skin lesion photo. The model scores each condition it knows and shows where it was looking. Educational demo only.</p>
+        </div>
+
+        <div class="workspace">
+          <form id="imaging-form" class="card card-pad">
+            <div class="field">
+              <label for="image-type">Image type</label>
+              <select id="image-type" name="image_type">
+                <option value="chest_xray">Chest X-ray</option>
+                <option value="skin_lesion">Skin lesion</option>
+                <option value="retinal">Retinal (not available)</option>
+              </select>
+              <div id="conditions-note" class="symptom-count"></div>
+            </div>
+
+            <div class="field">
+              <span class="label">Medical image</span>
+              <label class="dropzone" id="dropzone" for="image-file">
+                <span class="dropzone-icon" data-icon="upload" data-size="22"></span>
+                <span class="dropzone-title">Drop an image here, or <u>browse</u></span>
+                <span class="dropzone-hint">PNG or JPEG</span>
+              </label>
+              <input type="file" id="image-file" name="image" class="sr-only" accept="image/png, image/jpeg" />
+              <div id="image-preview-wrap" class="image-preview-wrap hidden">
+                <img id="image-preview" alt="Selected image preview" />
+                <div class="preview-meta">
+                  <strong id="preview-name"></strong>
+                  <span id="preview-size"></span>
+                </div>
+                <button type="button" class="btn-icon" id="preview-remove" aria-label="Remove image" data-icon="x" data-size="18"></button>
+              </div>
+            </div>
+
+            <div class="field">
+              <label class="switch">
+                <input type="checkbox" id="threshold-override-toggle" />
+                <span class="switch-track"></span>
+                <span>Override with a single fixed threshold</span>
+              </label>
+              <small>Off (recommended): each condition uses its own tuned threshold, learned from validation data. On: one value applies to every condition.</small>
+              <div id="threshold-slider-wrap" class="hidden">
+                <label for="threshold">Fixed threshold — <span id="threshold-value">0.50</span></label>
+                <input type="range" id="threshold" name="threshold" min="0.01" max="0.95" step="0.01" value="0.5" />
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-block" id="analyze-button">Analyze image</button>
+          </form>
+
+          <div>
+            <section id="result" class="result hidden"></section>
+            <div class="result-placeholder">
+              <span class="ph-icon" data-icon="scan" data-size="26"></span>
+              <strong>Findings will appear here</strong>
+              <span>Upload an image and run the analysis.</span>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+  <div class="scrim" id="scrim"></div>
+  <script src="js/config.js"></script>
+  <script src="js/shell.js"></script>
+  <script src="js/imaging.js"></script>
+</body>
+</html>

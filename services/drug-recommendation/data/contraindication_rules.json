@@ -1,0 +1,29 @@
+{
+  "allergy_rules": {
+    "penicillin": [
+      "amoxicillin",
+      "ampicillin",
+      "penicillin v potassium"
+    ],
+    "sulfa": [
+      "sulfamethoxazole",
+      "sulfasalazine"
+    ],
+    "nsaid": [
+      "ibuprofen",
+      "naproxen",
+      "aspirin"
+    ]
+  },
+  "interaction_rules": {
+    "warfarin": [
+      "ibuprofen",
+      "aspirin",
+      "naproxen"
+    ],
+    "maoi": [
+      "sertraline",
+      "fluoxetine"
+    ]
+  }
+}

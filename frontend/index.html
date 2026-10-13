@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Overview — MediAssist</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23194391'/%3E%3Cpath d='M16 24s-7-4.4-7-9.6A4 4 0 0 1 16 12a4 4 0 0 1 7 2.4C23 19.6 16 24 16 24z' fill='none' stroke='white' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+  <script>try{var t=localStorage.getItem("theme")||(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");document.documentElement.dataset.theme=t}catch(e){}</script>
+</head>
+<body data-page="overview" data-title="Overview" data-subtitle="Four AI tools behind one gateway">
+  <div class="app">
+    <aside class="sidebar" id="sidebar"></aside>
+    <div class="inset">
+      <header class="topbar" id="topbar"></header>
+      <main class="page">
+
+        <section class="hero">
+          <span class="badge">Educational demo · not medical advice</span>
+          <h2>Health AI tools, in one place</h2>
+          <p>Check symptoms, analyze medical images, look up medication options and ask health questions — powered by four independently versioned AI services.</p>
+          <div class="hero-actions">
+            <a class="btn" href="diagnosis.html">Check symptoms <span data-icon="arrowRight" data-size="16"></span></a>
+            <a class="btn btn-ghost" href="chatbot.html">Ask the chatbot</a>
+          </div>
+        </section>
+
+        <section class="stat-grid" aria-label="System status">
+          <div class="card stat">
+            <div class="stat-top"><span>API gateway</span><span data-icon="activity" data-size="18"></span></div>
+            <div class="stat-value is-offline" id="stat-gateway">…</div>
+            <div class="stat-hint">Routes all four services</div>
+          </div>
+          <div class="card stat">
+            <div class="stat-top"><span>Symptoms tracked</span><span data-icon="stethoscope" data-size="18"></span></div>
+            <div class="stat-value is-offline" id="stat-symptoms">…</div>
+            <div class="stat-hint">Diagnosis model vocabulary</div>
+          </div>
+          <div class="card stat">
+            <div class="stat-top"><span>Imaging models online</span><span data-icon="scan" data-size="18"></span></div>
+            <div class="stat-value is-offline" id="stat-imaging">…</div>
+            <div class="stat-hint" id="stat-imaging-hint">Checking…</div>
+          </div>
+          <div class="card stat">
+            <div class="stat-top"><span>Drug conditions</span><span data-icon="pill" data-size="18"></span></div>
+            <div class="stat-value is-offline" id="stat-drugs">…</div>
+            <div class="stat-hint">Conditions with review data</div>
+          </div>
+        </section>
+
+        <div class="section-head"><h3>Tools</h3></div>
+        <section class="service-grid">
+          <a class="card service-card" href="diagnosis.html">
+            <div class="service-top">
+              <span class="service-icon" data-icon="stethoscope" data-size="22"></span>
+              <span class="dot-chip" id="svc-diagnosis-status" data-state="checking">Checking…</span>
+            </div>
+            <h4>Disease Diagnosis</h4>
+            <p>Select symptoms and get a ranked list of likely conditions with model confidence and general precautions.</p>
+            <div class="service-foot"><span>Open tool</span><span data-icon="arrowRight" data-size="16"></span></div>
+          </a>
+
+          <a class="card service-card" href="imaging.html">
+            <div class="service-top">
+              <span class="service-icon" data-icon="scan" data-size="22"></span>
+              <div class="chips">
+                <span class="dot-chip" id="svc-chest-status" data-state="checking">Chest X-ray</span>
+                <span class="dot-chip" id="svc-skin-status" data-state="checking">Skin lesion</span>
+              </div>
+            </div>
+            <h4>Image Analysis</h4>
+            <p>Upload a chest X-ray or skin lesion image. Get per-condition findings and a Grad-CAM heatmap of where the model looked.</p>
+            <div class="service-foot"><span>Open tool</span><span data-icon="arrowRight" data-size="16"></span></div>
+          </a>
+
+          <a class="card service-card" href="drugs.html">
+            <div class="service-top">
+              <span class="service-icon" data-icon="pill" data-size="22"></span>
+              <span class="dot-chip" id="svc-drugs-status" data-state="checking">Checking…</span>
+            </div>
+            <h4>Drug Recommendation</h4>
+            <p>Look up medications ranked from aggregated patient reviews, with allergy and interaction flags. Not a prescribing tool.</p>
+            <div class="service-foot"><span>Open tool</span><span data-icon="arrowRight" data-size="16"></span></div>
+          </a>
+
+          <a class="card service-card" href="chatbot.html">
+            <div class="service-top">
+              <span class="service-icon" data-icon="message" data-size="22"></span>
+              <span class="dot-chip">Retrieval-based Q&amp;A</span>
+            </div>
+            <h4>Medical Chatbot</h4>
+            <p>Ask health questions and get answers grounded in the MedQuAD reference set, with sources and a confidence flag.</p>
+            <div class="service-foot"><span>Open tool</span><span data-icon="arrowRight" data-size="16"></span></div>
+          </a>
+        </section>
+
+        <div class="callout callout-warn" style="margin-top:28px">
+          <span data-icon="alert" data-size="18"></span>
+          <span><strong>Not a medical device.</strong> Everything here is an educational demonstration. Results can be wrong and must never replace advice from a qualified clinician.</span>
+        </div>
+      </main>
+    </div>
+  </div>
+  <div class="scrim" id="scrim"></div>
+  <script src="js/config.js"></script>
+  <script src="js/shell.js"></script>
+  <script src="js/overview.js"></script>
+</body>
+</html>

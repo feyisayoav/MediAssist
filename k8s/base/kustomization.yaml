@@ -1,0 +1,12 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - diagnosis.yaml
+  - imaging.yaml
+  - drug.yaml
+  - chatbot.yaml
+  - gateway.yaml
+  - frontend.yaml
+  - ingress.yaml

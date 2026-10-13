@@ -1,0 +1,23 @@
+package main
+
+import (
+	"log"
+	"net/http"
+
+	"github.com/ashthecoder05/medical-ai-gateway/internal/config"
+	"github.com/ashthecoder05/medical-ai-gateway/internal/router"
+)
+
+func main() {
+	cfg := config.Load()
+	handler := router.New(cfg)
+
+	log.Printf("API Gateway listening on :%s", cfg.Port)
+	log.Printf("Diagnosis service -> %s", cfg.DiagnosisServiceURL)
+	log.Printf("Imaging service   -> %s", cfg.ImagingServiceURL)
+	log.Printf("Drug service      -> %s", cfg.DrugServiceURL)
+	log.Printf("Chatbot service   -> %s", cfg.ChatbotServiceURL)
+	if err := http.ListenAndServe(":"+cfg.Port, handler); err != nil {
+		log.Fatalf("server failed: %v", err)
+	}
+}

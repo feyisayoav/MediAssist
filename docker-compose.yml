@@ -1,0 +1,17 @@
+services:
+  medical-ai:
+    build: .
+    image: medical-ai-system:latest
+    container_name: medical-ai
+    ports:
+      - "3000:3000"   # frontend
+      - "8080:8080"   # API gateway (the frontend calls http://localhost:8080)
+    environment:
+      CHATBOT_ENABLE_RERANKING: "false"
+      CHATBOT_ENABLE_GENERATION: "false"   # "true" = FLAN-T5 answers; needs ~3 GB extra RAM
+    volumes:
+      - hf-cache:/data/hf                  # persists downloaded HuggingFace models
+    restart: unless-stopped
+
+volumes:
+  hf-cache:

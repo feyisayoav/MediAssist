@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Disease Diagnosis — MediAssist</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23194391'/%3E%3Cpath d='M16 24s-7-4.4-7-9.6A4 4 0 0 1 16 12a4 4 0 0 1 7 2.4C23 19.6 16 24 16 24z' fill='none' stroke='white' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+  <script>try{var t=localStorage.getItem("theme")||(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");document.documentElement.dataset.theme=t}catch(e){}</script>
+</head>
+<body data-page="diagnosis" data-title="Disease Diagnosis" data-subtitle="Select symptoms to see the most likely conditions">
+  <div class="app">
+    <aside class="sidebar" id="sidebar"></aside>
+    <div class="inset">
+      <header class="topbar" id="topbar"></header>
+      <main class="page">
+        <div class="page-intro">
+          <h2>What are you experiencing?</h2>
+          <p>Choose your symptoms and the model estimates which conditions they most resemble. This is an educational demo, not a diagnosis.</p>
+        </div>
+
+        <div class="workspace">
+          <form id="diagnosis-form" class="card card-pad">
+            <div class="field-grid">
+              <div class="field">
+                <label for="age">Age</label>
+                <input type="number" id="age" name="age" min="0" max="120" placeholder="e.g. 34" required />
+              </div>
+              <div class="field">
+                <label for="gender">Gender</label>
+                <select id="gender" name="gender" required>
+                  <option value="">Select…</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="symptom-filter">Symptoms</label>
+              <input type="text" id="symptom-filter" placeholder="Search symptoms…" autocomplete="off" />
+              <div id="symptom-count" class="symptom-count"></div>
+              <div id="symptom-checklist" class="symptom-checklist">
+                <p class="loading-text">Loading symptom list…</p>
+              </div>
+            </div>
+
+            <div class="field">
+              <span class="label">Selected symptoms (<span id="selected-count">0</span>)</span>
+              <div id="selected-symptoms" class="selected-symptoms">
+                <p class="empty-text">None selected yet.</p>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-block">Get prediction</button>
+          </form>
+
+          <div>
+            <section id="result" class="result hidden"></section>
+            <div class="result-placeholder">
+              <span class="ph-icon" data-icon="stethoscope" data-size="26"></span>
+              <strong>Your results will appear here</strong>
+              <span>Pick a few symptoms and run a prediction.</span>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+  <div class="scrim" id="scrim"></div>
+  <script src="js/config.js"></script>
+  <script src="js/shell.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

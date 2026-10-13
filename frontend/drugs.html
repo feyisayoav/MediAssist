@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Drug Recommendation — MediAssist</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23194391'/%3E%3Cpath d='M16 24s-7-4.4-7-9.6A4 4 0 0 1 16 12a4 4 0 0 1 7 2.4C23 19.6 16 24 16 24z' fill='none' stroke='white' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+  <script>try{var t=localStorage.getItem("theme")||(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");document.documentElement.dataset.theme=t}catch(e){}</script>
+</head>
+<body data-page="drugs" data-title="Drug Recommendation" data-subtitle="Clinical decision support — not a prescribing tool">
+  <div class="app">
+    <aside class="sidebar" id="sidebar"></aside>
+    <div class="inset">
+      <header class="topbar" id="topbar"></header>
+      <main class="page">
+        <div class="page-intro">
+          <h2>Look up medication options</h2>
+          <p>Pick a condition to see medications ranked from aggregated patient reviews, with allergy and interaction flags. It does not prescribe.</p>
+        </div>
+
+        <div class="workspace">
+          <form id="drugs-form" class="card card-pad">
+            <div class="field">
+              <label for="condition-input">Condition</label>
+              <input type="text" id="condition-input" name="condition" list="condition-options" placeholder="Start typing a condition…" autocomplete="off" required />
+              <datalist id="condition-options"></datalist>
+              <div id="condition-count" class="symptom-count"></div>
+            </div>
+
+            <div class="field">
+              <label for="age">Age <span class="muted">(optional)</span></label>
+              <input type="number" id="age" name="age" min="0" max="120" placeholder="e.g. 34" />
+            </div>
+
+            <div class="field">
+              <label for="current-medications">Current medications <span class="muted">(optional)</span></label>
+              <input type="text" id="current-medications" placeholder="e.g. warfarin, metformin" autocomplete="off" />
+              <small>Comma-separated.</small>
+            </div>
+
+            <div class="field">
+              <label for="allergies">Allergies <span class="muted">(optional)</span></label>
+              <input type="text" id="allergies" placeholder="e.g. penicillin, sulfa" autocomplete="off" />
+              <small>Comma-separated.</small>
+            </div>
+
+            <button type="submit" class="btn btn-block" id="recommend-button">Get recommendations</button>
+          </form>
+
+          <div>
+            <section id="result" class="result hidden"></section>
+            <div class="result-placeholder">
+              <span class="ph-icon" data-icon="pill" data-size="26"></span>
+              <strong>Recommendations will appear here</strong>
+              <span>Choose a condition to see ranked options.</span>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+  <div class="scrim" id="scrim"></div>
+  <script src="js/config.js"></script>
+  <script src="js/shell.js"></script>
+  <script src="js/drugs.js"></script>
+</body>
+</html>
