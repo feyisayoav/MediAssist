@@ -169,20 +169,33 @@ def _load_cross_encoder():
 
 def _load_generator():
     try:
-        from transformers import pipeline
-    except ModuleNotFoundError:
+        import torch
+        from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
+    except ModuleNotFoundError as exc:
         raise DataLoadError(
-            "CHATBOT_ENABLE_GENERATION is true but 'transformers' isn't "
-            "installed. pip install transformers, then add it to requirements.txt."
+            f"CHATBOT_ENABLE_GENERATION is true but '{exc.name}' isn't installed. "
+            "pip install transformers torch sentencepiece, then add them to requirements.txt."
         ) from None
+
     try:
-        return pipeline("text2text-generation", model=GENERATION_MODEL_NAME)
+        tokenizer = AutoTokenizer.from_pretrained(GENERATION_MODEL_NAME)
+        model = AutoModelForSeq2SeqLM.from_pretrained(GENERATION_MODEL_NAME)
+        model.eval()
     except Exception as e:
         raise DataLoadError(
-            f"CHATBOT_ENABLE_GENERATION is true but failed to load generation "
-            f"model '{GENERATION_MODEL_NAME}': {e}. This model downloads from "
-            f"HuggingFace on first use — confirm internet access is available."
+            f"CHATBOT_ENABLE_GENERATION is true but failed to load generation model "
+            f"'{GENERATION_MODEL_NAME}': {e}. This model downloads from HuggingFace on "
+            "first use — confirm internet access is available."
         ) from None
+
+    def generate(prompt: str, max_new_tokens: int = 200):
+        inputs = tokenizer(prompt, return_tensors="pt")
+        with torch.no_grad():
+            output_ids = model.generate(**inputs, max_new_tokens=max_new_tokens)
+        text = tokenizer.decode(output_ids[0], skip_special_tokens=True)
+        return [{"generated_text": text}]
+
+    return generate
 
 
 def _load_embeddings_artifacts(corpus: list):

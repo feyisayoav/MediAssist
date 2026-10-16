@@ -1,0 +1,345 @@
+# ---- namespace ----
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mediassist
+---
+# ---- configmap ----
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mediassist-config
+  namespace: mediassist
+data:
+  # Gateway -> backend services (cluster DNS = Service names)
+  DIAGNOSIS_SERVICE_URL: "http://diagnosis:8000"
+  IMAGING_SERVICE_URL: "http://imaging:8001"
+  DRUG_SERVICE_URL: "http://drug:8002"
+  CHATBOT_SERVICE_URL: "http://chatbot:8003"
+  ALLOWED_ORIGINS: "*"
+  # Chatbot behaviour
+  CHATBOT_ENABLE_RERANKING: "false"
+  CHATBOT_ENABLE_GENERATION: "true"
+---
+# ---- diagnosis ----
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: diagnosis
+  namespace: mediassist
+  labels: {app: diagnosis, part-of: mediassist}
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: diagnosis}
+  template:
+    metadata:
+      labels: {app: diagnosis, part-of: mediassist}
+    spec:
+      containers:
+        - name: diagnosis
+          image: ghcr.io/feyisayoav/mediassist-diagnosis:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+          resources:
+            requests: {memory: 1Gi, cpu: 250m}
+            limits: {memory: 2560Mi}
+          startupProbe:
+            tcpSocket: {port: 8000}
+            periodSeconds: 5
+            failureThreshold: 60      # up to 5 min to load models
+          readinessProbe:
+            tcpSocket: {port: 8000}
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket: {port: 8000}
+            periodSeconds: 20
+            failureThreshold: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: diagnosis
+  namespace: mediassist
+spec:
+  selector: {app: diagnosis}
+  ports:
+    - port: 8000
+      targetPort: 8000
+---
+# ---- imaging ----
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: imaging
+  namespace: mediassist
+  labels: {app: imaging, part-of: mediassist}
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: imaging}
+  template:
+    metadata:
+      labels: {app: imaging, part-of: mediassist}
+    spec:
+      containers:
+        - name: imaging
+          image: ghcr.io/feyisayoav/mediassist-imaging:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8001
+          resources:
+            requests: {memory: 1Gi, cpu: 500m}
+            limits: {memory: 3Gi}
+          startupProbe:
+            tcpSocket: {port: 8001}
+            periodSeconds: 5
+            failureThreshold: 60      # up to 5 min to load models
+          readinessProbe:
+            tcpSocket: {port: 8001}
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket: {port: 8001}
+            periodSeconds: 20
+            failureThreshold: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: imaging
+  namespace: mediassist
+spec:
+  selector: {app: imaging}
+  ports:
+    - port: 8001
+      targetPort: 8001
+---
+# ---- drug ----
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: drug
+  namespace: mediassist
+  labels: {app: drug, part-of: mediassist}
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: drug}
+  template:
+    metadata:
+      labels: {app: drug, part-of: mediassist}
+    spec:
+      containers:
+        - name: drug
+          image: ghcr.io/feyisayoav/mediassist-drug:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8002
+          resources:
+            requests: {memory: 128Mi, cpu: 100m}
+            limits: {memory: 512Mi}
+          startupProbe:
+            tcpSocket: {port: 8002}
+            periodSeconds: 5
+            failureThreshold: 60      # up to 5 min to load models
+          readinessProbe:
+            tcpSocket: {port: 8002}
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket: {port: 8002}
+            periodSeconds: 20
+            failureThreshold: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: drug
+  namespace: mediassist
+spec:
+  selector: {app: drug}
+  ports:
+    - port: 8002
+      targetPort: 8002
+---
+# ---- chatbot ----
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: chatbot-hf-cache
+  namespace: mediassist
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chatbot
+  namespace: mediassist
+  labels: {app: chatbot, part-of: mediassist}
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate            # RWO volume: old pod must release it first
+  selector:
+    matchLabels: {app: chatbot}
+  template:
+    metadata:
+      labels: {app: chatbot, part-of: mediassist}
+    spec:
+      securityContext:
+        fsGroup: 1000         # image user (uid 1000) can write the PVC
+      containers:
+        - name: chatbot
+          image: ghcr.io/feyisayoav/mediassist-chatbot:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8003
+          envFrom:
+            - configMapRef: {name: mediassist-config}
+          volumeMounts:
+            - {name: hf-cache, mountPath: /data/hf}
+          resources:
+            requests: {memory: 1536Mi, cpu: 500m}
+            limits: {memory: 4Gi}
+          startupProbe:       # first boot downloads ~1 GB of models (cached on the PVC afterwards)
+            tcpSocket: {port: 8003}
+            periodSeconds: 10
+            failureThreshold: 90      # 15 min
+          readinessProbe:
+            tcpSocket: {port: 8003}
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket: {port: 8003}
+            periodSeconds: 20
+            failureThreshold: 3
+      volumes:
+        - name: hf-cache
+          persistentVolumeClaim: {claimName: chatbot-hf-cache}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: chatbot
+  namespace: mediassist
+spec:
+  selector: {app: chatbot}
+  ports:
+    - port: 8003
+      targetPort: 8003
+---
+# ---- gateway ----
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway
+  namespace: mediassist
+  labels: {app: gateway, part-of: mediassist}
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: gateway}
+  template:
+    metadata:
+      labels: {app: gateway, part-of: mediassist}
+    spec:
+      containers:
+        - name: gateway
+          image: ghcr.io/feyisayoav/mediassist-gateway:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          env:
+            - {name: PORT, value: "8080"}
+          envFrom:
+            - configMapRef: {name: mediassist-config}
+          resources:
+            requests: {memory: 32Mi, cpu: 50m}
+            limits: {memory: 256Mi}
+          readinessProbe:
+            httpGet: {path: /api/v1/health, port: 8080}
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: {path: /api/v1/health, port: 8080}
+            periodSeconds: 20
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway
+  namespace: mediassist
+spec:
+  selector: {app: gateway}
+  ports:
+    - port: 8080
+      targetPort: 8080
+---
+# ---- frontend ----
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: mediassist
+  labels: {app: frontend, part-of: mediassist}
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: frontend}
+  template:
+    metadata:
+      labels: {app: frontend, part-of: mediassist}
+    spec:
+      containers:
+        - name: frontend
+          image: ghcr.io/feyisayoav/mediassist-frontend:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+          env:
+            - {name: GATEWAY_URL, value: ""}   # same origin; the Ingress sends /api to the gateway
+          resources:
+            requests: {memory: 16Mi, cpu: 10m}
+            limits: {memory: 128Mi}
+          readinessProbe:
+            httpGet: {path: /, port: 80}
+          livenessProbe:
+            httpGet: {path: /, port: 80}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  namespace: mediassist
+spec:
+  selector: {app: frontend}
+  ports:
+    - port: 80
+      targetPort: 80
+---
+# ---- ingress ----
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mediassist
+  namespace: mediassist
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "20m"      # X-ray / skin images (default 1m rejects them)
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "180"   # gateway allows the chatbot up to 120s
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "180"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: mediassist.local
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service: {name: gateway, port: {number: 8080}}
+          - path: /
+            pathType: Prefix
+            backend:
+              service: {name: frontend, port: {number: 80}}
