@@ -1,7 +1,5 @@
 # MediAssist on Kubernetes
 
-Drop these files into the repo root (they merge with `gateway/`, `services/*`, `frontend/`).
-
 ```
 gateway/Dockerfile                      Go, multi-stage -> distroless
 frontend/Dockerfile + docker/40-config.sh   nginx; writes js/config.js from $GATEWAY_URL
