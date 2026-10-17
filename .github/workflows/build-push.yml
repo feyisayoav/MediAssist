@@ -1,0 +1,90 @@
+name: Build and push images
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:        # Actions tab -> Run workflow = rebuild everything
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set.outputs.matrix }}
+      any: ${{ steps.set.outputs.any }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: set
+        shell: bash
+        run: |
+          # name:directory  (image = ghcr.io/<owner>/mediassist-<name>)
+          SERVICES="diagnosis:services/disease-diagnosis
+          imaging:services/medical-imaging
+          drug:services/drug-recommendation
+          chatbot:services/medical-chatbot
+          gateway:gateway
+          frontend:frontend"
+
+          BEFORE="${{ github.event.before }}"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] \
+             || [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ] \
+             || ! git cat-file -e "$BEFORE" 2>/dev/null; then
+            CHANGED_ALL=1
+          else
+            CHANGED_ALL=0
+            FILES=$(git diff --name-only "$BEFORE" "${{ github.sha }}")
+          fi
+
+          ITEMS=""
+          while IFS=: read -r name dir; do
+            name=$(echo "$name" | xargs); dir=$(echo "$dir" | xargs)
+            if [ "$CHANGED_ALL" = "1" ] || echo "$FILES" | grep -q "^$dir/"; then
+              ITEMS="$ITEMS{\"name\":\"$name\",\"context\":\"$dir\"},"
+            fi
+          done <<< "$SERVICES"
+
+          ITEMS="[${ITEMS%,}]"
+          echo "matrix={\"include\":$ITEMS}" >> "$GITHUB_OUTPUT"
+          if [ "$ITEMS" = "[]" ]; then echo "any=false" >> "$GITHUB_OUTPUT"; else echo "any=true" >> "$GITHUB_OUTPUT"; fi
+          echo "Building: $ITEMS"
+
+  build:
+    needs: detect
+    if: needs.detect.outputs.any == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.detect.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Lowercase owner
+        run: echo "OWNER=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_ENV"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/mediassist-${{ matrix.name }}:latest
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/mediassist-${{ matrix.name }}:${{ github.sha }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+          cache-from: type=gha,scope=${{ matrix.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.name }}
