@@ -7,7 +7,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends libgomp1 libgli
 WORKDIR /app
 COPY requirements.txt .
 RUN pip install -r requirements.txt
+RUN pip install opentelemetry-distro opentelemetry-exporter-otlp \
+ && opentelemetry-bootstrap -a install
 COPY --chown=app:app . .
 USER app
 EXPOSE 8002
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8002"]
+CMD ["opentelemetry-instrument", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8002"]

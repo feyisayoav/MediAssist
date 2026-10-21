@@ -8,14 +8,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends libgomp1 \
  && mkdir -p /data/hf /opt/nltk_data && chown -R app:app /data /opt/nltk_data
 WORKDIR /app
 COPY requirements.txt .
-# CPU-only torch first (~2 GB smaller than the default CUDA wheel), then the rest.
 RUN pip install torch --index-url https://download.pytorch.org/whl/cpu \
  && pip install -r requirements.txt \
  && pip install sentencepiece \
  && python -c "import nltk; nltk.download('stopwords', download_dir='/opt/nltk_data')" \
  && chown -R app:app /opt/nltk_data
+RUN pip install opentelemetry-distro opentelemetry-exporter-otlp \
+ && opentelemetry-bootstrap -a install
 COPY --chown=app:app . .
 USER app
 VOLUME ["/data/hf"]
 EXPOSE 8003
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8003"]
+CMD ["opentelemetry-instrument", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8003"]

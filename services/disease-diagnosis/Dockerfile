@@ -7,7 +7,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends libgomp1 libgli
 WORKDIR /app
 COPY requirements.txt .
 RUN pip install -r requirements.txt && pip install xgboost  # the v3 pickle imports xgboost at load time
+# --- observability: OpenTelemetry auto-instrumentation (runs after app deps so bootstrap sees them) ---
+RUN pip install opentelemetry-distro opentelemetry-exporter-otlp \
+ && opentelemetry-bootstrap -a install
 COPY --chown=app:app . .
 USER app
 EXPOSE 8000
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["opentelemetry-instrument", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
