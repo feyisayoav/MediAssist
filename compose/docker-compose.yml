@@ -1,0 +1,107 @@
+# App:      http://localhost:3000
+# Grafana:  http://localhost:3001   (admin / admin)  
+
+x-otel-python: &otel-python
+  OTEL_EXPORTER_OTLP_ENDPOINT: http://lgtm:4317
+  OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+  OTEL_TRACES_EXPORTER: otlp
+  OTEL_METRICS_EXPORTER: otlp
+  OTEL_LOGS_EXPORTER: otlp
+  OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED: "true"
+  OTEL_PYTHON_LOG_CORRELATION: "true"
+  OTEL_PROPAGATORS: tracecontext,baggage
+  OTEL_RESOURCE_ATTRIBUTES: deployment.environment=compose,service.namespace=mediassist
+
+services:
+  # ---------- observability backend ----------
+  lgtm:
+    image: grafana/otel-lgtm:latest      # Grafana + Tempo + Loki + Prometheus + OTel Collector
+    ports:
+      - "3001:3000"     # Grafana (3000 is the frontend)
+      - "4317:4317"     # OTLP gRPC
+      - "4318:4318"     # OTLP HTTP
+    volumes:
+      - lgtm-data:/data
+    mem_limit: 2g
+
+  # ---------- backend services ----------
+  diagnosis:
+    image: ghcr.io/feyisayoav/mediassist-diagnosis:latest
+    environment:
+      <<: *otel-python
+      OTEL_SERVICE_NAME: diagnosis
+    ports:
+      - "8000:8000"
+    mem_limit: 2560m
+    depends_on: [lgtm]
+
+  imaging:
+    image: ghcr.io/feyisayoav/mediassist-imaging:latest
+    environment:
+      <<: *otel-python
+      OTEL_SERVICE_NAME: imaging
+    ports:
+      - "8001:8001"
+    mem_limit: 3g
+    depends_on: [lgtm]
+
+  drug:
+    image: ghcr.io/feyisayoav/mediassist-drug:latest
+    environment:
+      <<: *otel-python
+      OTEL_SERVICE_NAME: drug
+    ports:
+      - "8002:8002"
+    mem_limit: 512m
+    depends_on: [lgtm]
+
+  chatbot:
+    image: ghcr.io/feyisayoav/mediassist-chatbot:latest
+    environment:
+      <<: *otel-python
+      OTEL_SERVICE_NAME: chatbot
+      CHATBOT_ENABLE_GENERATION: "true"
+      CHATBOT_ENABLE_RERANKING: "false"
+    volumes:
+      - hf-cache:/data/hf          # keeps the ~1 GB model download between runs
+    ports:
+      - "8003:8003"
+    mem_limit: 4g
+    depends_on: [lgtm]
+
+  # ---------- edge ----------
+  gateway:
+    image: ghcr.io/feyisayoav/mediassist-gateway:latest
+    environment:
+      PORT: "8080"
+      DIAGNOSIS_SERVICE_URL: http://diagnosis:8000
+      IMAGING_SERVICE_URL: http://imaging:8001
+      DRUG_SERVICE_URL: http://drug:8002
+      CHATBOT_SERVICE_URL: http://chatbot:8003
+      ALLOWED_ORIGINS: "*"
+      OTEL_SERVICE_NAME: gateway
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://lgtm:4317
+      OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+      OTEL_PROPAGATORS: tracecontext,baggage
+      OTEL_RESOURCE_ATTRIBUTES: deployment.environment=compose,service.namespace=mediassist
+    ports:
+      - "8080:8080"
+    depends_on:
+      - lgtm
+      - diagnosis
+      - imaging
+      - drug
+      - chatbot
+
+  frontend:
+    image: ghcr.io/feyisayoav/mediassist-frontend:latest
+    environment:
+      GATEWAY_URL: http://localhost:8080   # the browser calls the gateway directly
+    ports:
+      - "3000:80"
+    depends_on:
+      - gateway
+
+volumes:
+  hf-cache:
+  lgtm-data:
